@@ -2,7 +2,7 @@
 .main-page-container {
     padding: 40px 20px;
     background-color: var(--background-dark);
-    background-image: url('../../public/background.jpg'); 
+    background-image: url('../../../public/background.jpg'); 
     background-size: cover; /* Ensure the image covers the entire container */
     background-position: center; /* Center the background image */
     background-repeat: no-repeat; /* Prevent the image from repeating */

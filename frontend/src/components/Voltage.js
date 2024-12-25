@@ -1,5 +1,5 @@
 import React from 'react';
-import './VoltageButton.css'; // Ensure the correct path
+import './styles/VoltageButton.css'; 
 import PropTypes from 'prop-types';
 
 const VoltageButton = ({ label, onClick }) => {

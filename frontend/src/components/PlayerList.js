@@ -3,7 +3,7 @@ import { FaSearch, FaSort } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import VoltageButton from './Voltage';
 import axios from 'axios';
-import './PlayerList.css';
+import './styles/PlayerList.css';
 
 
 const PlayerList = () => {

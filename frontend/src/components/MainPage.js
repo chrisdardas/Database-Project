@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { AuthContext } from '../context/Authcontext'; 
 import { Link, useNavigate } from 'react-router-dom';
-import './Main.css';
+import './styles/Main.css';
 
 const MainPage = () => {
     const { logout } = useContext(AuthContext); // Get the logout function from the context
