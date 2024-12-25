@@ -57,3 +57,6 @@ ehthumbs.db
 # Others
 coverage/
 dist/
+
+# Ignore all local .env files
+/docker-compose.yml
