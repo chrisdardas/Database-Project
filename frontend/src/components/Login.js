@@ -16,7 +16,7 @@ const Login = () => {
         console.log('Attempting to log in with:', { email, username });
         
         try {
-            const response = await axios.post('http://localhost:5000/login', { email, username});
+            const response = await axios.post('http://localhost:5000/player/login', { email, username});
             console.log('Login response:', response.data);
             
             if(response.data.success){

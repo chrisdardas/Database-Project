@@ -18,7 +18,7 @@ const CreateAccount = () => {
             return;
         }
         try {
-            const response = await axios.post('http://localhost:5000/register', { email, username, password });
+            const response = await axios.post('http://localhost:5000/player', { email, username, password });
             console.log(response.data.message);
             navigate('/');
         } catch (error) {
