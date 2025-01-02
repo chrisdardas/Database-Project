@@ -1,13 +1,38 @@
-import sql from "mysql2";
+import mysql from "mysql2/promise";
 import dotenv from "dotenv";
+dotenv.config(); // To read the .env file
 
-dotenv.config();
-
-const db = await sql.createConnection({
+const dbConfig = {
     host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
     database: process.env.DB_DATABASE
+};
+
+console.log("DB_HOST:", process.env.DB_HOST);
+console.log("DB_PLAYER_USER:", process.env.DB_PLAYER_USER);
+console.log("DB_PLAYER_PASS:", process.env.DB_PLAYER_PASS);
+
+// Admin Connection Pool
+const adminPool = mysql.createPool({
+    ...dbConfig,
+    user: process.env.DB_ADMIN_USER,
+    password: process.env.DB_ADMIN_PASS,
+    waitForConnections: true
 });
 
-export default db;
+// Player Connection Pool
+const playerPool = mysql.createPool({
+    ...dbConfig,
+    user: process.env.DB_PLAYER_USER,
+    password: process.env.DB_PLAYER_PASS,
+    waitForConnections: true
+});
+
+// Developer Connection Pool
+const developerPool = mysql.createPool({
+    ...dbConfig,
+    user: process.env.DB_DEVELOPER_USER,
+    password: process.env.DB_DEVELOPER_PASS,
+    waitForConnections: true
+});
+
+export { adminPool, playerPool, developerPool };

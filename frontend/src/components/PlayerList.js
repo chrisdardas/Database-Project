@@ -7,6 +7,8 @@ import './styles/PlayerList.css';
 
 
 const PlayerList = () => {
+    const token = localStorage.getItem('token');
+    console.log('Token:', token);
     const [players, setPlayers] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
@@ -23,14 +25,31 @@ const PlayerList = () => {
     };
 
     useEffect(() => {
-        axios.get('http://localhost:5000/player')
-            .then((response) => {
+        const fetchPlayers = async () => {
+            try {
+                const response = await axios.get('http://localhost:5000/player', {
+                    headers: {
+                        Authorization: `Bearer ${token}` // Include the token in the header
+                    }
+                });
                 setPlayers(response.data);
-            })
-            .catch((error) => {
+            } catch (error) {
                 console.error('Error fetching players:', error);
-            });
-    }, []);
+                if (error.response && error.response.status === 401) {
+                    // Handle unauthorized access, e.g., redirect to login
+                    alert('Unauthorized! Please log in.');
+                    // Redirect logic here
+                }
+            }
+        };
+
+        if (token) {
+            fetchPlayers();
+        } else {
+            console.log('No token found. Please log in.');
+            // Optionally redirect to login
+        }
+    }, [token]); // Re-run if token changes
 
     const handleSortChange = (e) => {
         setSortOrder(e.target.value);

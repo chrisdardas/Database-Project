@@ -1,10 +1,25 @@
 import { Router } from "express";
-import db from "../database.js";
+import { adminPool, playerPool, developerPool } from "../database.js";
 
 
 const router = Router(); // Create a new router
 
 router.get("/", async (req, res) => {
+    const role = req.user.role;
+    let db;
+    switch(role){
+        case "admin":
+            db = adminPool;
+            break;
+        case "player":
+            db = playerPool;
+            break;
+        case "developer":
+            db = developerPool;
+            break;
+        default:
+            return res.status(403).send("Unauthorized");
+    }
     const { multiplayer_support } = req.query;
     // console.log(multiplayer_support);
 
@@ -34,6 +49,21 @@ router.get("/", async (req, res) => {
 
 router.get("/:game_id", async (req, res, next) => {
     // console.log("GETTING GAME BY ID");
+    const role = req.user.role;
+    let db;
+    switch(role){
+        case "admin":
+            db = adminPool;
+            break;
+        case "player":
+            db = playerPool;
+            break;
+        case "developer":
+            db = developerPool;
+            break;
+        default:
+            return res.status(403).send("Unauthorized");
+    }
     db.query("SELECT title FROM game WHERE game_id = ?", [req.params.game_id], (err, result) => {
         if (err) {
             console.log(err);
@@ -44,6 +74,18 @@ router.get("/:game_id", async (req, res, next) => {
 });
 
 router.post("/", async (req, res) => {
+    const role = req.user.role;
+    let db;
+    switch(role){
+        case "admin":
+            db = adminPool;
+            break;
+        case "developer":
+            db = developerPool;
+            break;
+        default:
+            return res.status(403).send("Unauthorized");
+    }
     db.query("INSERT INTO game (title, release_date, price, age_rating, dlcs_available, multiplayer_support, genre_name, developer_id, platform_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
         [req.body.title, req.body.release_date, req.body.price, req.body.age_rating, req.body.dlcs_available, 
             req.body.multiplayer_support, req.body.genre_name, req.body.developer_id, req.body.platform_id
@@ -57,6 +99,18 @@ router.post("/", async (req, res) => {
 });
 
 router.delete("/:game_id", async (req, res) => {
+    const role = req.user.role;
+    let db;
+    switch(role){
+        case "admin":
+            db = adminPool;
+            break;
+        case "developer":
+            db = developerPool;
+            break;
+        default:
+            return res.status(403).send("Unauthorized");
+    }
     db.query("DELETE FROM game WHERE game_id = ?", [req.params.game_id], (err, result) => {
         if (err) {
             console.log(err);
