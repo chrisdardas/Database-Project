@@ -5,7 +5,12 @@ const ReviewsList = () => {
     const [reviews, setReviews] = useState([]);
 
     useEffect(() => {
-        axios.get('http://localhost:5000/reviews')
+        const token = localStorage.getItem('token');
+        axios.get('http://localhost:5000/reviews', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
             .then((response) => {
                 setReviews(response.data);
             })

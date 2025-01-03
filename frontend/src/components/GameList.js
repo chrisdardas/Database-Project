@@ -6,7 +6,12 @@ const GameList = () => {
     const [games, setGames] = useState([]);
 
     useEffect(() => {
-        axios.get('http://localhost:5000/game')
+        const token = localStorage.getItem('token');
+        axios.get('http://localhost:5000/game', {
+            headers: {
+                Authorization: `Bearer ${token}`
+        }
+    })
             .then((response) => {
                 setGames(response.data);
             })

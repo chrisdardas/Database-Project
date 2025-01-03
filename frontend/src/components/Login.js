@@ -20,8 +20,10 @@ const Login = () => {
             console.log('Login response:', response.data);
             
             if(response.data.success){
+                const { token, user } = response.data;
+                localStorage.setItem('token', token);
                 console.log("Login successful: ", response.data.user);
-                login(response.data.user);
+                login(user);
                 navigate("/main");
             }
             else{

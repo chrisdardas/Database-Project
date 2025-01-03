@@ -43,25 +43,46 @@ router.post("/login", async (req, res) => {
 
 
 router.post("/", async (req, res) => {
+    const { username, email, password, role } = req.body; 
+    console.log(`Registration attempt for Username: ${username}, Email: ${email}, Role: ${role}`);
     const db = playerPool;
-    const { email, username, password } = req.body;
-    const checkQuery = 'SELECT * FROM player WHERE username = ?';
-    db.query(checkQuery, [username], (err, results) => {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({ message: 'Server error.' });
-        }
-        if (results.length > 0) {
+    // let db;
+    // switch(role){
+    //     case "admin":
+    //         db = adminPool;
+    //         break;
+    //     case "developer":
+    //         db = developerPool;
+    //         break;
+    //     case "player":
+    //         db = playerPool;
+    //         break;
+    //     default:
+    //         return res.status(400).json({ message: "Invalid role specified." });
+    // }
+
+    const checkQuery = "SELECT * FROM player WHERE username = ?";
+    const insertQuery = "INSERT INTO player (username, email) VALUES (?, ?)";
+
+    try {
+        // Check if username already exists
+        const [existingUsers] = await db.query(checkQuery, [username]);
+
+        if (existingUsers.length > 0) {
             return res.status(400).json({ message: 'Username already exists.' });
         }
-        const insertQuery = 'INSERT INTO player (username, email) VALUES (?, ?)';
-        db.query(insertQuery, [username, email], (err) => {
-            if (err) {
-                return res.status(500).json({ message: 'Server error.' });
-            }
-            res.json({ message: 'Account created successfully.' });
-        });
-    });
+        // Insert the new player
+        const token = jwt.sign(
+            { username, email, role },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+        await db.query(insertQuery, [username, email]); 
+        res.status(201).json({ message: 'Account created successfully.', token });
+    } catch (error) {
+        console.error('Error during registration:', error);
+        res.status(500).json({ message: 'Server error.' });
+    }
 });
 
 router.use(authenticate); // Apply the authenticate middleware to all the routes in this router
@@ -86,34 +107,24 @@ router.get("/", async (req, res) => {
         default:
             return res.status(403).send("Unauthorized");
     }
+    try{
+        if (achievement_id !== undefined) {
+            // console.log("ACHIEVEMENT ID: ", achievement_id);
+            const [results] = await db.query(sql, [achievement_id]);
+            res.status(200).send(results);
+        }
+        else if (ban_status !== undefined) {
+            const [results] = await db.query("SELECT player_id, username FROM player WHERE ban_status = ?", [ban_status]);
+            res.status(200).send(results);
+        } else {
+            const [results] = await db.query("SELECT * FROM player");   
+            res.status(200).send(results);
+        }
+    } catch (error) {
+        console.error('Error fetching players:', error);
+        res.status(500).json({ message: 'Server error.' });
+    };
 
-    if (achievement_id !== undefined) {
-        // console.log("ACHIEVEMENT ID: ", achievement_id);
-        db.query(sql, [achievement_id], (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                res.status(200).send(result);
-            }
-        });
-    }
-    else if (ban_status !== undefined) {
-        db.query("SELECT player_id, username FROM player WHERE ban_status = ?", [ban_status], (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                res.status(200).send(result);
-            }
-        });
-    } else {
-        db.query("SELECT * FROM player", (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                res.status(200).send(result);
-            }
-        });   
-    }
 });
 
 
@@ -133,13 +144,13 @@ router.get("/:player_id", async (req, res, next) => {
         default:
             return res.status(403).send("Unauthorized");
     }
-    db.query("SELECT * FROM player WHERE player_id = ?", [req.params.player_id], (err, result) => {
-        if (err) {
-            console.log(err);
-        } else {
-            res.status(200).send(result);
-        }
-    });
+    try {
+        const [results] = await db.query("SELECT * FROM player WHERE player_id = ?", [req.params.player_id]);
+        res.status(200).send(results);
+    } catch (error) {
+        console.error('Error fetching player:', error);
+        res.status(500).json({ message: 'Server error.' });
+    };
 });
 
 
@@ -159,14 +170,23 @@ router.put("/:player_id", async (req, res) => {
         default:
             return res.status(403).send("Unauthorized");
     }
-    db.query("UPDATE player SET username = ?, email = ?, total_playtime = ?, achievement_points = ?, ban_status = ?, last_login = ? WHERE player_id = ?", 
-        [req.body.username, req.body.email, req.body.total_playtime, req.body.achievement_points, req.body.ban_status, req.body.last_login, req.params.player_id], (err, result) => {
-        if (err) {
-            console.log(err);
-        } else {
-            res.status(200).send("Player Updated");
-        }
-    });
+    const sql = "UPDATE player SET username = ?, email = ?, total_playtime = ?, achievement_points = ?, ban_status = ?, last_login = ? WHERE player_id = ?";
+    const values =[
+        req.body.username,
+        req.body.email,
+        req.body.total_playtime,
+        req.body.achievement_points,
+        req.body.ban_status,
+        req.body.last_login,
+        req.params.player_id
+    ];
+    try{
+        const [ results ] = await db.query(sql, values);
+        res.status(201).send("Player Updated");
+    } catch (error) {
+        console.error('Error updating player:', error);
+        res.status(500).json({ message: 'Server error.' });
+    }
 });
 
 router.delete("/:player_id", async (req, res) => {
@@ -177,13 +197,13 @@ router.delete("/:player_id", async (req, res) => {
     } else {
         return res.status(403).send("Unauthorized");
     }
-    db.query("DELETE FROM player WHERE player_id = ?", [req.params.player_id], (err, result) => {
-        if (err) {
-            console.log(err);
-        } else {
-            res.status(204).send("Player Deleted");
-        }
-    });
+    try {
+        const [results] = await db.query('DELETE FROM player WHERE player_id = ?', [req.params.player_id]);
+        res.status(204).send("Player Deleted");
+    } catch (error) {
+        console.error('Error deleting player:', error);
+        res.status(500).json({ message: 'Server error.' });
+    }
 });
 
 export default router; // Export the router

@@ -22,7 +22,7 @@ const corsOptions = {
 app.use(cors(corsOptions)); // Cross-Origin Resource Sharing To connect to the server from a different origin
 app.use(express.json()); // To parse JSON bodies
 app.use(helmet()); // To set secure HTTP headers
-// app.use(morgan('combined')); // To log HTTP requests
+app.use(morgan('combined')); // To log HTTP requests
 
 app.get("/", (req, res, next) => {
     res.status(200).send("Welcome to Gamestorm");

@@ -19,13 +19,13 @@ router.get("/", async (req, res) => {
         default:
             return res.status(403).send("Unauthorized");
     }
-    db.query("SELECT rating, comment FROM review", (err, result) => {
-        if (err) {
-            console.log(err);
-        } else {
-            res.status(200).send(result);
-        }
-    });
+    try{
+        const [results] = await db.query("SELECT rating, comment FROM review");
+        res.status(200).send(results);
+    } catch(error){
+        console.error('Error fetching reviews:', error);
+        res.status(500).json({ message: 'Server error.' });
+    }
 });
 
 router.post("/", async (req, res) => {
@@ -44,14 +44,21 @@ router.post("/", async (req, res) => {
         default:
             return res.status(403).send("Unauthorized");
     }
-    db.query("INSERT INTO review (review_id, rating, comment, publication_date, player_id) VALUES (?, ?, ?, ?, ?)", 
-        [req.body.rating, req.body.comment], (err, result) => {
-        if (err) {
-            console.log(err);
-        } else {
-            res.status(201).send("Review Added");
-        }
-    });
+    const sql = "INSERT INTO review (rating, comment, publication_date, player_id) VALUES (?, ?, ?, ?)";
+    const values =[
+        req.body.rating,
+        req.body.comment,
+        new Date(),
+        req.user.player_id
+    ];
+
+    try {
+        const [result] = await db.query(sql, values);
+        res.status(201).send("Review Added");
+    } catch (error) {
+        console.error('Error adding review:', error);
+        res.status(500).json({ message: 'Server error.' });
+    };
 });
 
 router.put("/:review_id", async (req, res) => {
@@ -70,14 +77,19 @@ router.put("/:review_id", async (req, res) => {
         default:
             return res.status(403).send("Unauthorized");
     }
-    db.query("UPDATE review SET rating = ?, comment = ? WHERE review_id = ?", 
-        [req.body.rating, req.body.comment, req.params.review_id], (err, result) => {
-        if (err) {
-            console.log(err);
-        } else {
-            res.status(200).send("Review Updated");
-        }
-    });
+    const sql = "UPDATE review SET rating = ?, comment = ? WHERE review_id = ?";
+    const values = [
+        req.body.rating,
+        req.body.comment,
+        req.params.review_id
+    ];
+    try {
+        const [result] = await db.query(sql, values);
+        res.status(201).send("Review Updated");
+    } catch (error) {
+        console.error('Error updating review:', error);
+        res.status(500).json({ message: 'Server error.' });
+    };
 });
 
 router.delete("/:review_id", async (req, res) => {
@@ -96,13 +108,15 @@ router.delete("/:review_id", async (req, res) => {
         default:
             return res.status(403).send("Unauthorized");
     }
-    db.query("DELETE FROM review WHERE review_id = ?", [req.params.review_id], (err, result) => {
-        if (err) {
-            console.log(err);
-        } else {
-            res.status(200).send("Review Deleted");
-        }
-    });
+    const sql = "DELETE FROM review WHERE review_id = ?";
+    const values = [req.params.review_id];
+    try {
+        const [result] = await db.query(sql, values);
+        res.status(204).send("Review Deleted");
+    } catch (error) {
+        console.error('Error deleting review:', error);
+        res.status(500).json({ message: 'Server error.' });
+    };
 });
 
 export default router;

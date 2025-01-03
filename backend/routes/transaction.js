@@ -19,14 +19,19 @@ router.post("/:player_id", async (req, res) => {
         default:
             return res.status(403).send("Unauthorized");
     }
-    db.query("INSERT INTO transaction (transaction_amount, payment_method, player_id) VALUES (?, ?, ?)", 
-        [req.body.transaction_amount, req.body.payment_method, req.params.player_id], (err, result) => {
-        if (err) {
-            console.log(err);
-        } else {
-            res.status(201).send("Transaction Added");
-        }
-    });
+    const sql = "INSERT INTO transaction (transaction_amount, payment_method, player_id) VALUES (?, ?, ?)";
+    const values = [
+        req.body.transaction_amount,
+        req.body.payment_method,
+        req.params.player_id
+    ];
+    try {
+        const [result] = await db.query(sql, values);
+        res.status(201).send("Transaction Added");
+    } catch (error) {
+        console.error('Error adding transaction:', error);
+        res.status(500).json({ message: 'Server error.' });
+    };
 });
 
 export default router; // Export the router

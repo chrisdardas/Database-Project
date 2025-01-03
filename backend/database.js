@@ -7,9 +7,9 @@ const dbConfig = {
     database: process.env.DB_DATABASE
 };
 
-console.log("DB_HOST:", process.env.DB_HOST);
-console.log("DB_PLAYER_USER:", process.env.DB_PLAYER_USER);
-console.log("DB_PLAYER_PASS:", process.env.DB_PLAYER_PASS);
+// console.log("DB_HOST:", process.env.DB_HOST);
+// console.log("DB_PLAYER_USER:", process.env.DB_PLAYER_USER);
+// console.log("DB_PLAYER_PASS:", process.env.DB_PLAYER_PASS);
 
 // Admin Connection Pool
 const adminPool = mysql.createPool({

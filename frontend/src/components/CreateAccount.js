@@ -19,8 +19,17 @@ const CreateAccount = () => {
         }
         try {
             const response = await axios.post('http://localhost:5000/player', { email, username, password });
-            console.log(response.data.message);
-            navigate('/');
+            const { token } = response.data;
+            console.log('Token:', token);
+            console.log('Response:', response.data);
+            if(token) {
+                localStorage.setItem('token', token);
+                alert('Account created successfully!');
+                navigate('/');
+            } else {
+                alert('Account creation failed.');
+                navigate('/create-account');
+            }
         } catch (error) {
             console.log(error.response.data.message);
             alert(error.response.data.message);

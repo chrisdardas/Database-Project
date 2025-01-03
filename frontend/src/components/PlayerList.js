@@ -7,6 +7,7 @@ import './styles/PlayerList.css';
 
 
 const PlayerList = () => {
+    // TODO: Find a way to get the token from the login page
     const token = localStorage.getItem('token');
     console.log('Token:', token);
     const [players, setPlayers] = useState([]);
