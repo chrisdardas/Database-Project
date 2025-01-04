@@ -35,4 +35,13 @@ const developerPool = mysql.createPool({
     waitForConnections: true
 });
 
+const roleToPoolMap = {
+    admin: adminPool,
+    player: playerPool,
+    developer: developerPool,
+};
+
+const getDatabasePool = (role) => roleToPoolMap[role] || null;
+
 export { adminPool, playerPool, developerPool };
+// export { getDatabasePool };

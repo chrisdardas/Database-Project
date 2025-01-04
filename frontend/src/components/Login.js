@@ -8,6 +8,7 @@ const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState('');
+    const [error, setError] = useState('');
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
 
@@ -30,12 +31,9 @@ const Login = () => {
                 alert("Login failed: " + (response.data.message || "Unknown error."));
             }
         } catch (error) {
-            console.error("Error logging in: ", error);
-            if (error.response && error.response.data && error.response.data.message) {
-                alert(`Login failed: ${error.response.data.message}`);
-            } else {
-                alert("An unexpected error occurred. Please try again.");
-            }
+            console.log(error.response?.data?.message || error.message);
+            setError(error.response?.data?.message || 'An error occurred.');
+            alert(error.response?.data?.message || 'An error occurred.');
         }
     };
 
@@ -77,6 +75,7 @@ const Login = () => {
                         required 
                     />
                 </div> */}
+                {error && <p className="Error">{error}</p>}
                 <button type="submit">Login</button>
             </form>
             <button className="create-account-button" onClick={handleCreateAccount}>

@@ -6,39 +6,72 @@ import authenticate from "../authentication.js";
 const router = Router(); // Create a new router
 
 router.post("/login", async (req, res) => {
-    const db = playerPool;
     const { email, username } = req.body;
+    console.log('req.body:', req.body);
+    // console.log('Role:', role);
         console.log(`Login attempt for Email: ${email}, Username: ${username}`);
     
         if (!email || !username) {
             console.log('Missing email or username in request.');
             return res.status(400).json({ success: false, message: 'Email and Username are required.' });
         }
-    
-        try {
-            const userQuery = 'SELECT * FROM player WHERE email = ? AND username = ?';
-            const [users] = await db.query(userQuery, [email, username]); // Destructure the result to get the first element of the array
-            // console.log(`Number of users found: ${users.length}`);
-    
-            if (users.length === 0) {
-                console.log('No matching user found.');
-                return res.status(401).json({ success: false, message: 'Invalid email or username.' });
-            }
-    
-            const user = users[0]; // Get the first user from the array
-            // console.log(`User found: ${user.username}`);
+    try {
+        let user = null;
+        let role = null;
+        let pool = null;
 
-            const token = jwt.sign(
-                { id: user.player_id, role: 'player' },
-                process.env.JWT_SECRET,
-                { expiresIn: '1h' }
-            );
-    
-            return res.status(200).json({ success: true, token, user: { id: user.id, email: user.email, username: user.username } });
-        } catch (error) {
-            console.error('Error during login:', error);
-            return res.status(500).json({ success: false, message: 'Server error.' });
+        // Attempt to find user in Player Pool
+        const playerQuery = 'SELECT * FROM player WHERE email = ?';
+        const [playerUsers] = await playerPool.query(playerQuery, [email]);
+
+        if (playerUsers.length > 0) {
+            user = playerUsers[0];
+            role = 'player';
+            pool = playerPool;
+        } else {
+            // Attempt to find user in Developer Pool
+            const developerQuery = 'SELECT * FROM developer WHERE email = ?';
+            const [developerUsers] = await developerPool.query(developerQuery, [email]);
+
+            if (developerUsers.length > 0) {
+                user = developerUsers[0];
+                role = 'developer';
+                pool = developerPool;
+            }
         }
+
+        if (!user) {
+            console.log('No matching user found in Player or Developer tables.');
+            return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+        }
+
+        const payload = {
+            id: user.id || user.player_id || user.developer_id,
+            role: role
+        };
+        // console.log("PAYLOAD: ", payload);
+
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+        // console.log("USER: ", user);
+
+        const sanitizedUser = {
+            id: user.id || user.player_id || user.developer_id,
+            email: user.email,
+            username: user.username || user.name,
+            role: role
+        };
+
+        // console.log("sanitizedUser: ", sanitizedUser);
+        // console.log("ROLE: ", role);
+        return res.status(200).json({
+            success: true,
+            token,
+            user: sanitizedUser
+        });
+    } catch (error) {
+        console.error('Error during login:', error);
+        return res.status(500).json({ success: false, message: 'Server error.' });
+    }
 });
 
 
@@ -93,6 +126,7 @@ router.get("/", async (req, res) => {
     console.log("ROLE: ", req);
     const sql = "SELECT A.player_id, A.username, C.achievement_id, C.title, C.date_of_completion FROM player AS A JOIN player_unlocks_achievement AS B ON A.player_id = B.player_id JOIN achievement AS C ON B.achievement_id = C.achievement_id WHERE C.achievement_id = ?;";
     // console.log("ACHIEVEMENT ID: ", req.query);
+    console.log("ROLE: ", role);
     let db;
     switch(role){
         case "admin":
@@ -129,6 +163,7 @@ router.get("/", async (req, res) => {
 
 
 router.get("/:player_id", async (req, res, next) => {
+    
     const role = req.user.role;
     let db;
     switch(role){
@@ -142,6 +177,7 @@ router.get("/:player_id", async (req, res, next) => {
             db = developerPool;
             break;
         default:
+            console.log("req.user:", req.user.id);
             return res.status(403).send("Unauthorized");
     }
     try {
@@ -151,6 +187,7 @@ router.get("/:player_id", async (req, res, next) => {
         console.error('Error fetching player:', error);
         res.status(500).json({ message: 'Server error.' });
     };
+    
 });
 
 
