@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/Authcontext';
-import axios from 'axios';
+import api from "./api";
 import './styles/Login.css';
 
 const Login = () => {
@@ -17,7 +17,7 @@ const Login = () => {
         console.log('Attempting to log in with:', { email, username });
         
         try {
-            const response = await axios.post('http://localhost:5000/player/login', { email, username});
+            const response = await api.post('http://localhost:5000/player/login', { email, username});
             console.log('Login response:', response.data);
             
             if(response.data.success){

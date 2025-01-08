@@ -3,6 +3,7 @@ import './App.css';
 import Login from './components/Login'; // Import the Login component
 import CreateAccount from './components/CreateAccount'; // Import the CreateAccount component
 import PlayerList from './components/PlayerList'; // Import the PlayerList component
+import PlayerProfile from './components/PlayerProfile'; // Import the PlayerProfile component
 import GameList from './components/GameList'; // Import the GameList component
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Import React Router components
 import ReviewsList from './components/ReviewsList'; // Import the ReviewsList component
@@ -24,6 +25,14 @@ const App = () => {
                                 <PlayerList />
                             </ProtectedRoute>
                         } 
+                    />
+                    <Route
+                        path="/player/:player_id"
+                        element={
+                            <ProtectedRoute>
+                                <PlayerProfile />
+                            </ProtectedRoute>
+                        }
                     />
                     <Route 
                         path="/games" 

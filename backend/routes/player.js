@@ -1,20 +1,21 @@
-import  { Router } from "express";
-import jwt from "jsonwebtoken";
-import { adminPool, playerPool, developerPool } from "../database.js";
-import authenticate from "../authentication.js";
+import { Router } from 'express';
+import jwt from 'jsonwebtoken';
+import authenticate from '../authentication.js';
+import { playerPool, developerPool, adminPool } from '../database.js';
 
 const router = Router(); // Create a new router
 
+// Public routes
 router.post("/login", async (req, res) => {
     const { email, username } = req.body;
     console.log('req.body:', req.body);
-    // console.log('Role:', role);
-        console.log(`Login attempt for Email: ${email}, Username: ${username}`);
-    
-        if (!email || !username) {
-            console.log('Missing email or username in request.');
-            return res.status(400).json({ success: false, message: 'Email and Username are required.' });
-        }
+    console.log(`Login attempt for Email: ${email}, Username: ${username}`);
+
+    if (!email || !username) {
+        console.log('Missing email or username in request.');
+        return res.status(400).json({ success: false, message: 'Email and Username are required.' });
+    }
+
     try {
         let user = null;
         let role = null;
@@ -49,10 +50,8 @@ router.post("/login", async (req, res) => {
             id: user.id || user.player_id || user.developer_id,
             role: role
         };
-        // console.log("PAYLOAD: ", payload);
 
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
-        // console.log("USER: ", user);
 
         const sanitizedUser = {
             id: user.id || user.player_id || user.developer_id,
@@ -61,8 +60,6 @@ router.post("/login", async (req, res) => {
             role: role
         };
 
-        // console.log("sanitizedUser: ", sanitizedUser);
-        // console.log("ROLE: ", role);
         return res.status(200).json({
             success: true,
             token,
@@ -74,25 +71,10 @@ router.post("/login", async (req, res) => {
     }
 });
 
-
 router.post("/", async (req, res) => {
     const { username, email, password, role } = req.body; 
     console.log(`Registration attempt for Username: ${username}, Email: ${email}, Role: ${role}`);
     const db = playerPool;
-    // let db;
-    // switch(role){
-    //     case "admin":
-    //         db = adminPool;
-    //         break;
-    //     case "developer":
-    //         db = developerPool;
-    //         break;
-    //     case "player":
-    //         db = playerPool;
-    //         break;
-    //     default:
-    //         return res.status(400).json({ message: "Invalid role specified." });
-    // }
 
     const checkQuery = "SELECT * FROM player WHERE username = ?";
     const insertQuery = "INSERT INTO player (username, email) VALUES (?, ?)";
@@ -118,16 +100,17 @@ router.post("/", async (req, res) => {
     }
 });
 
-router.use(authenticate); // Apply the authenticate middleware to all the routes in this router
+// Apply the authenticate middleware to all routes below
+router.use(authenticate);
 
 router.get("/", async (req, res) => {
     const { ban_status, achievement_id } = req.query;
+    console.log("Auth check - User:", req.user);
     const role = req.user.role;
-    console.log("ROLE: ", req);
-    const sql = "SELECT A.player_id, A.username, C.achievement_id, C.title, C.date_of_completion FROM player AS A JOIN player_unlocks_achievement AS B ON A.player_id = B.player_id JOIN achievement AS C ON B.achievement_id = C.achievement_id WHERE C.achievement_id = ?;";
-    // console.log("ACHIEVEMENT ID: ", req.query);
     console.log("ROLE: ", role);
+    const sql = "SELECT A.player_id, A.username, C.achievement_id, C.title, C.date_of_completion FROM player AS A JOIN player_unlocks_achievement AS B ON A.player_id = B.player_id JOIN achievement AS C ON B.achievement_id = C.achievement_id WHERE C.achievement_id = ?;";
     let db;
+
     switch(role){
         case "admin":
             db = adminPool;
@@ -139,34 +122,32 @@ router.get("/", async (req, res) => {
             db = developerPool;
             break;
         default:
-            return res.status(403).send("Unauthorized");
+            return res.status(403).send("Unauthorized to view players");
     }
+
     try{
         if (achievement_id !== undefined) {
-            // console.log("ACHIEVEMENT ID: ", achievement_id);
             const [results] = await db.query(sql, [achievement_id]);
-            res.status(200).send(results);
-        }
-        else if (ban_status !== undefined) {
-            const [results] = await db.query("SELECT player_id, username FROM player WHERE ban_status = ?", [ban_status]);
-            res.status(200).send(results);
+            return res.status(200).json(results);
+        } else if (ban_status !== undefined) {
+            const [results] = await db.query("SELECT * FROM player WHERE ban_status = ?", [ban_status]);
+            return res.status(200).json(results);
         } else {
-            const [results] = await db.query("SELECT * FROM player");   
-            res.status(200).send(results);
+            const [results] = await db.query("SELECT * FROM player");
+            return res.status(200).json(results);
         }
     } catch (error) {
         console.error('Error fetching players:', error);
         res.status(500).json({ message: 'Server error.' });
-    };
-
+    }
 });
 
-
-router.get("/:player_id", async (req, res, next) => {
-    
+router.get("/:player_id", async (req, res) => {
+    console.log("Auth check - User:", req.user);
     const role = req.user.role;
     let db;
-    switch(role){
+    
+    switch(role) {
         case "admin":
             db = adminPool;
             break;
@@ -177,19 +158,27 @@ router.get("/:player_id", async (req, res, next) => {
             db = developerPool;
             break;
         default:
-            console.log("req.user:", req.user.id);
-            return res.status(403).send("Unauthorized");
+            return res.status(403).send("Invalid role");
     }
+
     try {
+        if (role === "player" && String(req.user.id) !== String(req.params.player_id)) {
+            console.log(`Access denied - User ${req.user.id} attempted to access player ${req.params.player_id}`);
+            return res.status(403).send("Unauthorized");
+        }
+
         const [results] = await db.query("SELECT * FROM player WHERE player_id = ?", [req.params.player_id]);
-        res.status(200).send(results);
+        
+        if (!results.length) {
+            return res.status(404).send("Player not found");
+        }
+        
+        res.status(200).send(results[0]);
     } catch (error) {
         console.error('Error fetching player:', error);
-        res.status(500).json({ message: 'Server error.' });
-    };
-    
+        res.status(500).json({ message: 'Server error' });
+    }
 });
-
 
 router.put("/:player_id", async (req, res) => {
     const role = req.user.role;
@@ -205,7 +194,7 @@ router.put("/:player_id", async (req, res) => {
             db = developerPool;
             break;
         default:
-            return res.status(403).send("Unauthorized");
+            return res.status(403).send("Unauthorized to update player");
     }
     const sql = "UPDATE player SET username = ?, email = ?, total_playtime = ?, achievement_points = ?, ban_status = ?, last_login = ? WHERE player_id = ?";
     const values =[
@@ -219,7 +208,7 @@ router.put("/:player_id", async (req, res) => {
     ];
     try{
         const [ results ] = await db.query(sql, values);
-        res.status(201).send("Player Updated");
+        res.status(200).send("Player Updated");
     } catch (error) {
         console.error('Error updating player:', error);
         res.status(500).json({ message: 'Server error.' });
@@ -232,7 +221,7 @@ router.delete("/:player_id", async (req, res) => {
     if(role === "admin"){
         db = adminPool;
     } else {
-        return res.status(403).send("Unauthorized");
+        return res.status(403).send("Unauthorized to delete player");
     }
     try {
         const [results] = await db.query('DELETE FROM player WHERE player_id = ?', [req.params.player_id]);

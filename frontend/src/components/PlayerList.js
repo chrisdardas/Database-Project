@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaSearch, FaSort } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import VoltageButton from './Voltage';
-import axios from 'axios';
+import api from './api';
 import './styles/PlayerList.css';
 
 
@@ -28,12 +28,9 @@ const PlayerList = () => {
     useEffect(() => {
         const fetchPlayers = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/player', {
-                    headers: {
-                        Authorization: `Bearer ${token}` // Include the token in the header
-                    }
-                });
-                setPlayers(response.data);
+                const response = await api.get('/player');
+                setPlayers(response.data); // Set the players state
+                console.log('Players:', response.data);
             } catch (error) {
                 console.error('Error fetching players:', error);
                 if (error.response && error.response.status === 401) {
@@ -45,7 +42,7 @@ const PlayerList = () => {
         };
 
         if (token) {
-            fetchPlayers();
+            fetchPlayers(); // Fetch players if token is present
         } else {
             console.log('No token found. Please log in.');
             // Optionally redirect to login
