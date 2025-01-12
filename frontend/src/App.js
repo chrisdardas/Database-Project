@@ -5,6 +5,9 @@ import CreateAccount from './components/CreateAccount'; // Import the CreateAcco
 import PlayerList from './components/PlayerList'; // Import the PlayerList component
 import PlayerProfile from './components/PlayerProfile'; // Import the PlayerProfile component
 import GameList from './components/GameList'; // Import the GameList component
+import WishList from './components/WishList'; // Import the WishList component
+import Achievements from './components/Achievements'; // Import the Achievements component
+import DLC from './components/DLC';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Import React Router components
 import ReviewsList from './components/ReviewsList'; // Import the ReviewsList component
 import { AuthProvider } from './context/Authcontext'; // Import the AuthProvider component
@@ -61,6 +64,30 @@ const App = () => {
                                 <MainPage />
                             </ProtectedRoute>
                         } 
+                    />
+                    <Route 
+                        path = "/wishlist"
+                        element={
+                            <ProtectedRoute>
+                                <WishList />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route 
+                        path = "/achievement"
+                        element={
+                            <ProtectedRoute>
+                                <Achievements />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route 
+                        path = "/dlc"
+                        element={
+                            <ProtectedRoute>
+                                <DLC />
+                            </ProtectedRoute>
+                        }
                     />
                     <Route path="*" element={<h1>404: Not Found</h1>} />
                 </Routes>

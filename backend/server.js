@@ -11,6 +11,9 @@ import playerRouter from "./routes/player.js";
 import gameRouter from "./routes/game.js";
 import reviewRouter from "./routes/reviews.js";
 import transactionRouter from "./routes/transaction.js";
+import wishListRouter from "./routes/wishlist.js";
+import achievementRouter from "./routes/achievement.js";
+import dlcRouter from "./routes/dlc.js";
 import authenticate from "./authentication.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -47,6 +50,9 @@ app.use(authenticate);
 app.use("/game", gameRouter); 
 app.use("/reviews", reviewRouter);
 app.use("/transaction", transactionRouter);
+app.use("/wishlist", wishListRouter);
+app.use("/achievement", achievementRouter);
+app.use("/dlc", dlcRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

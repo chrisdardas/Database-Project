@@ -26,7 +26,7 @@ router.post("/:player_id", async (req, res) => {
         req.params.player_id
     ];
     try {
-        const [result] = await db.query(sql, values);
+        await db.query(sql, values);
         res.status(201).send("Transaction Added");
     } catch (error) {
         console.error('Error adding transaction:', error);
