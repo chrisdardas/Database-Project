@@ -24,7 +24,10 @@ const ReviewsList = () => {
             <h1>Reviews</h1>
             <ul>
                 {reviews.map(review => (
-                    <li key={review.review_id}>{[review.comment, review.rating]}</li>
+                    <li key={review.review_id} className="review-item">
+                    <span className="game-title">{review.comment}</span>
+                    <span className="game-price">{review.rating}</span>
+                    </li>
                 ))}
             </ul>
         </div>
